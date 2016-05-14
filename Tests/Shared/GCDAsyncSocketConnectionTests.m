@@ -56,6 +56,48 @@ static const uint16_t kTestPort = 30301;
     }];
 }
 
+- (void)testConnectionAgainstIPv4OnlyServer {
+    self.serverSocket.IPv6Enabled = NO;
+    
+    NSError *error = nil;
+    BOOL success = NO;
+    success = [self.serverSocket acceptOnPort:kTestPort error:&error];
+    XCTAssertTrue(success, @"Server failed setting up socket on port %d %@", kTestPort, error);
+    success = [self.clientSocket connectToHost:@"127.0.0.1" onPort:kTestPort error:&error];
+    XCTAssertTrue(success, @"Client failed connecting to up server socket on port %d %@", kTestPort, error);
+    
+    self.expectation = [self expectationWithDescription:@"Test Full Connection"];
+    [self waitForExpectationsWithTimeout:30 handler:^(NSError *error) {
+        if (error) {
+            NSLog(@"Error establishing test connection");
+        }
+        else {
+            XCTAssertTrue(self.acceptedServerSocket.isIPv4, @"Established connection is not IPv4");
+        }
+    }];
+}
+
+- (void)testConnectionAgainstIPv6OnlyServer {
+    self.serverSocket.IPv4Enabled = NO;
+    
+    NSError *error = nil;
+    BOOL success = NO;
+    success = [self.serverSocket acceptOnPort:kTestPort error:&error];
+    XCTAssertTrue(success, @"Server failed setting up socket on port %d %@", kTestPort, error);
+    success = [self.clientSocket connectToHost:@"::1" onPort:kTestPort error:&error];
+    XCTAssertTrue(success, @"Client failed connecting to up server socket on port %d %@", kTestPort, error);
+    
+    self.expectation = [self expectationWithDescription:@"Test Full Connection"];
+    [self waitForExpectationsWithTimeout:30 handler:^(NSError *error) {
+        if (error) {
+            NSLog(@"Error establishing test connection");
+        }
+        else {
+            XCTAssertTrue(self.acceptedServerSocket.isIPv6, @"Established connection is not IPv6");
+        }
+    }];
+}
+
 #pragma mark GCDAsyncSocketDelegate methods
 
 /**
