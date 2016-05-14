@@ -56,7 +56,7 @@ static const uint16_t kTestPort = 30301;
     }];
 }
 
-- (void)testConnectionAgainstIPv4OnlyServer {
+- (void)testConnectionWithAnIPv4OnlyServer {
     self.serverSocket.IPv6Enabled = NO;
     
     NSError *error = nil;
@@ -77,7 +77,7 @@ static const uint16_t kTestPort = 30301;
     }];
 }
 
-- (void)testConnectionAgainstIPv6OnlyServer {
+- (void)testConnectionWithAnIPv6OnlyServer {
     self.serverSocket.IPv4Enabled = NO;
     
     NSError *error = nil;
@@ -94,6 +94,42 @@ static const uint16_t kTestPort = 30301;
         }
         else {
             XCTAssertTrue(self.acceptedServerSocket.isIPv6, @"Established connection is not IPv6");
+        }
+    }];
+}
+
+- (void)testConnectionWithLocalhostWithClientPreferringIPv4 {
+    [self.clientSocket setIPv4PreferredOverIPv6:YES];
+    
+    NSError *error = nil;
+    BOOL success = NO;
+    success = [self.serverSocket acceptOnPort:kTestPort error:&error];
+    XCTAssertTrue(success, @"Server failed setting up socket on port %d %@", kTestPort, error);
+    success = [self.clientSocket connectToHost:@"localhost" onPort:kTestPort error:&error];
+    XCTAssertTrue(success, @"Client failed connecting to up server socket on port %d %@", kTestPort, error);
+    
+    self.expectation = [self expectationWithDescription:@"Test Full Connection"];
+    [self waitForExpectationsWithTimeout:30 handler:^(NSError *error) {
+        if (error) {
+            NSLog(@"Error establishing test connection");
+        }
+    }];
+}
+
+- (void)testConnectionWithLocalhostWithClientPreferringIPv6 {
+    [self.clientSocket setIPv4PreferredOverIPv6:NO];
+
+    NSError *error = nil;
+    BOOL success = NO;
+    success = [self.serverSocket acceptOnPort:kTestPort error:&error];
+    XCTAssertTrue(success, @"Server failed setting up socket on port %d %@", kTestPort, error);
+    success = [self.clientSocket connectToHost:@"localhost" onPort:kTestPort error:&error];
+    XCTAssertTrue(success, @"Client failed connecting to up server socket on port %d %@", kTestPort, error);
+    
+    self.expectation = [self expectationWithDescription:@"Test Full Connection"];
+    [self waitForExpectationsWithTimeout:30 handler:^(NSError *error) {
+        if (error) {
+            NSLog(@"Error establishing test connection");
         }
     }];
 }
